@@ -42,11 +42,18 @@ from peft import (
 )
 from peft.tuners.lora import LoraLayer
 from transformers.trainer_utils import PREFIX_CHECKPOINT_DIR
+
 import logging
+
+class StringFormatter(logging.Formatter):
+    def format(self, record):
+        # ensure msg is a string
+        record.msg = str(record.msg)
+        return super().format(record)
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
-formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+formatter = StringFormatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 ch = logging.StreamHandler()
 ch.setLevel(logging.INFO)
 ch.setFormatter(formatter)
@@ -801,7 +808,7 @@ def train():
     total = 0
     for k, v in dtypes.items(): total+= v
     for k, v in dtypes.items():
-        logger.info(k, v, v/total)
+        logger.info('%s %s %s', k, v, v/total)
 
     all_metrics = {"run_name": args.run_name}
     # Training
