@@ -815,7 +815,6 @@ def train():
         all_metrics.update(metrics)
     # Prediction
     if args.do_predict:
-        logger.info("*** Predict ***")
         prediction_output = trainer.predict(test_dataset=data_module['predict_dataset'],metric_key_prefix="predict")
         prediction_metrics = prediction_output.metrics
         predictions = prediction_output.predictions

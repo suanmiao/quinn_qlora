@@ -423,6 +423,7 @@ def train():
     # Prediction
     if args.do_predict:
         logger.info("*** Predict ***")
+        print("*** Predict ***")
         prediction_output = trainer.predict(test_dataset=data_module['predict_dataset'],metric_key_prefix="predict")
         prediction_metrics = prediction_output.metrics
         predictions = prediction_output.predictions
@@ -435,6 +436,12 @@ def train():
                 example['prediction_with_input'] = predictions[i].strip()
                 example['prediction'] = predictions[i].replace(example['input'], '').strip()
                 fout.write(json.dumps(example) + '\n')
+
+        for i, example in enumerate(data_module['predict_dataset']):
+            example['prediction_with_input'] = predictions[i].strip()
+            example['prediction'] = predictions[i].replace(example['input'], '').strip()
+            print(f"For input {example['input']}, the model predicts: [{example['prediction']}]")
+
         logger.info(prediction_metrics)
         trainer.log_metrics("predict", prediction_metrics)
         trainer.save_metrics("predict", prediction_metrics)
