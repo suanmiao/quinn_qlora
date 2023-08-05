@@ -13,6 +13,7 @@ import bitsandbytes as bnb
 import importlib
 from packaging import version
 from packaging.version import parse
+import time
 
 import torch
 import transformers
@@ -435,12 +436,10 @@ def train():
             for i, example in enumerate(data_module['predict_dataset']):
                 example['prediction_with_input'] = predictions[i].strip()
                 example['prediction'] = predictions[i].replace(example['input'], '').strip()
+                example['ref_output'] = example['output']
+                print(f"For input {example['input']}, the model predicts: [{example['prediction']}]")
                 fout.write(json.dumps(example) + '\n')
-
-        for i, example in enumerate(data_module['predict_dataset']):
-            example['prediction_with_input'] = predictions[i].strip()
-            example['prediction'] = predictions[i].replace(example['input'], '').strip()
-            print(f"For input {example['input']}, the model predicts: [{example['prediction']}]")
+            print(f"Predictions written to {os.path.join(args.output_dir, 'predictions.jsonl')}")
 
         logger.info(prediction_metrics)
         trainer.log_metrics("predict", prediction_metrics)
@@ -450,6 +449,29 @@ def train():
     if (args.do_train or args.do_eval or args.do_predict):
         with open(os.path.join(args.output_dir, "metrics.json"), "w") as fout:
             fout.write(json.dumps(all_metrics))
+    # Persist the args into a json file , the filename ends with the unix timestamp
+    if args.do_train:
+        operation = 'train'
+    elif args.do_eval:
+        operation = 'eval'
+    elif args.do_predict:
+        operation = 'predict'
+    else:
+        operation = 'none'
+    arg_file_name = f"args_{operation}_{int(time.time())}.json"
+
+    with open(os.path.join(args.output_dir, arg_file_name), "w") as fout:
+        def json_serializable_dict(obj):
+            result = {}
+            for key, value in obj.__dict__.items():
+                try:
+                    json.dumps(value)
+                    result[key] = value
+                except TypeError:
+                    continue
+            return result
+        fout.write(json.dumps(json_serializable_dict(args)))
+        print(f"Args written to {os.path.join(args.output_dir, arg_file_name)}")
 
 if __name__ == "__main__":
     train()
