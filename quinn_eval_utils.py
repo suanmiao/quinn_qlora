@@ -3,9 +3,9 @@ import pandas as pd
 import json
 from openai_utils import AbstractFunction, FunctionAgent, request_openai_retry
 
-def eval_jsonl(file_path):
+def eval_jsonl(file_path, concurrency=5, output_df_path=None):
     df = prediction_as_df(file_path)
-    eval_result_df = run_eval(concurrency=5, dataset_df=df)
+    eval_result_df = run_eval(concurrency=concurrency, dataset_df=df)
     print(eval_result_df.head(5))
     eval_result_df["final_score"] = pd.to_numeric(eval_result_df["final_score"], errors='coerce')
     eval_result_df["correctness"] = pd.to_numeric(eval_result_df["correctness"], errors='coerce')
@@ -19,7 +19,7 @@ def eval_jsonl(file_path):
     readability_mean = round(eval_result_df["readability"].mean(), 2)
 
     print(f"Got final score {final_score_mean}, correctness {correctness_mean}, comprehensiveness {comprehensiveness_mean}, readability {readability_mean}")
-
+    eval_result_df.to_csv(output_df_path, index=False)
 
 def prediction_as_df(file_path):
     # Load data from the jsonl file

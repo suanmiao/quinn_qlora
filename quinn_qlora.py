@@ -40,7 +40,6 @@ from peft.tuners.lora import LoraLayer
 from transformers.trainer_utils import PREFIX_CHECKPOINT_DIR
 from arguments import ModelArguments, DataArguments, TrainingArguments, GenerationArguments
 from data_processing import make_data_module, DataCollatorForCausalLM
-from quinn_eval_utils import eval_jsonl
 
 from logging_utils import get_logger
 
@@ -442,10 +441,6 @@ def train():
                 print(f"For input {example['input']}, the model predicts: [{example['prediction']}]")
                 fout.write(json.dumps(example) + '\n')
             print(f"Predictions written to {os.path.join(args.output_dir, 'predictions.jsonl')}")
-
-        print(f"Start evaluation on {prediction_file_path}")
-        eval_jsonl(prediction_file_path)
-        print(f"Finished evaluation on {prediction_file_path}")
 
         logger.info(prediction_metrics)
         trainer.log_metrics("predict", prediction_metrics)
