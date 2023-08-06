@@ -40,6 +40,7 @@ from peft.tuners.lora import LoraLayer
 from transformers.trainer_utils import PREFIX_CHECKPOINT_DIR
 from arguments import ModelArguments, DataArguments, TrainingArguments, GenerationArguments
 from data_processing import make_data_module, DataCollatorForCausalLM
+from quinn_eval_utils import eval_jsonl
 
 from logging_utils import get_logger
 
@@ -432,7 +433,8 @@ def train():
         predictions = tokenizer.batch_decode(
             predictions, skip_special_tokens=True, clean_up_tokenization_spaces=True
         )
-        with open(os.path.join(args.output_dir, 'predictions.jsonl'), 'w') as fout:
+        prediction_file_path = os.path.join(args.output_dir, 'predictions.jsonl')
+        with open(prediction_file_path, 'w') as fout:
             for i, example in enumerate(data_module['predict_dataset']):
                 example['prediction_with_input'] = predictions[i].strip()
                 example['prediction'] = predictions[i].replace(example['input'], '').strip()
@@ -440,6 +442,10 @@ def train():
                 print(f"For input {example['input']}, the model predicts: [{example['prediction']}]")
                 fout.write(json.dumps(example) + '\n')
             print(f"Predictions written to {os.path.join(args.output_dir, 'predictions.jsonl')}")
+
+        print(f"Start evaluation on {prediction_file_path}")
+        eval_jsonl(prediction_file_path)
+        print(f"Finished evaluation on {prediction_file_path}")
 
         logger.info(prediction_metrics)
         trainer.log_metrics("predict", prediction_metrics)
