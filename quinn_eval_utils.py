@@ -6,12 +6,10 @@ from openai_utils import AbstractFunction, FunctionAgent, request_openai_retry
 def eval_jsonl(file_path, concurrency=5, output_df_path=None):
     df = prediction_as_df(file_path)
     eval_result_df = run_eval(concurrency=concurrency, dataset_df=df)
-    print(eval_result_df.head(5))
     eval_result_df["final_score"] = pd.to_numeric(eval_result_df["final_score"], errors='coerce')
     eval_result_df["correctness"] = pd.to_numeric(eval_result_df["correctness"], errors='coerce')
     eval_result_df["comprehensiveness"] = pd.to_numeric(eval_result_df["comprehensiveness"], errors='coerce')
     eval_result_df["readability"] = pd.to_numeric(eval_result_df["readability"], errors='coerce')
-
 
     final_score_mean = round(eval_result_df["final_score"].mean(), 2)
     correctness_mean = round(eval_result_df["correctness"].mean(), 2)
@@ -177,6 +175,7 @@ def grade_row(row):
 
 
 def run_eval(concurrency=3, dataset_df=None):
+    print(f"Start evaluating {len(dataset_df)} rows with concurrency {concurrency}")
     rows = []
     with concurrent.futures.ThreadPoolExecutor(max_workers=concurrency) as executor:
         future_to_row = {executor.submit(grade_row, row): row for index, row in dataset_df.iterrows()}
@@ -185,7 +184,7 @@ def run_eval(concurrency=3, dataset_df=None):
             try:
                 rows.append(future.result())
             except Exception as exc:
-                print(f'An exception was raised, {exc}')
+                print(f'An exception was raised during evaluation, {exc}')
 
     eval_result_df = pd.DataFrame(rows)
     return eval_result_df

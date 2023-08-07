@@ -424,8 +424,9 @@ def train():
     # Prediction
     if args.do_predict:
         logger.info("*** Predict ***")
-        print("*** Predict ***")
-        prediction_output = trainer.predict(test_dataset=data_module['predict_dataset'],metric_key_prefix="predict")
+        predict_dataset = data_module['predict_dataset']
+        print(f"*** Predict for {len(predict_dataset)} examples ***")
+        prediction_output = trainer.predict(test_dataset=predict_dataset,metric_key_prefix="predict")
         prediction_metrics = prediction_output.metrics
         predictions = prediction_output.predictions
         predictions = np.where(predictions != -100, predictions, tokenizer.pad_token_id)
