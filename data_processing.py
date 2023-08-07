@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 from typing import Optional, Dict
 import transformers
-from datasets import load_dataset, Dataset
+from datasets import load_dataset, Dataset, concatenate_datasets
 from torch.nn.utils.rnn import pad_sequence
 import torch
 import os
@@ -220,15 +220,13 @@ def make_data_module(tokenizer: transformers.PreTrainedTokenizer, args) -> Dict:
             size_before_split = len(dataset['train'])
             if int(args.eval_dataset_size) == 1:
                 # Use the full dataset for evaluation
-                dataset = dataset["train"].train_test_split(
-                    test_size=1.0, shuffle=True, seed=42
-                )
+                eval_dataset = concatenate_datasets([dataset['test'], dataset['train']]) 
             else:
                 dataset = dataset["train"].train_test_split(
                     test_size=args.eval_dataset_size, shuffle=True, seed=42
                 )
 
-            eval_dataset = dataset['test']
+                eval_dataset = dataset['test']
             logger.info(f"Splitted train dataset in train and validation, original size {size_before_split}, train size {len(dataset['train'])}, validation size {len(dataset['test'])}")
         if args.max_eval_samples is not None and len(eval_dataset) > args.max_eval_samples:
             eval_dataset = eval_dataset.select(range(args.max_eval_samples))
